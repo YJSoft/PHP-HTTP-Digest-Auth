@@ -28,20 +28,20 @@ class HTTP_Digest {
             if(!$pw) {
                 //if id has empty password, id will be ignored.
                 unset($login_id[$id]);
-				
-				if(strpos($id,'"') !== FALSE || strpos($pw,'"') !== FALSE)
-				{
-					//if id or pw has "(quote), id will be ignored.
-                	unset($login_id[$id]);
-				}
+                
+                if(strpos($id,'"') !== FALSE || strpos($pw,'"') !== FALSE)
+                {
+                    //if id or pw has "(quote), id will be ignored.
+                    unset($login_id[$id]);
+                }
             }
         }
         
         if(!$login_id) {
             throw new \InvalidArgumentException('No valid id was found at array.');
         }
-		
-		$this->valid_id = $login_id;
+        
+        $this->valid_id = $login_id;
     }
     
     /**
@@ -70,33 +70,33 @@ class HTTP_Digest {
       * get auth information fron PHP_AUTH_DIGEST and check if valid. if not valid, return false. else return true
       *
       * @param string $digest
-	  * @throws BadMethodCallException when called static
+      * @throws BadMethodCallException when called static
       * @return bool
       */
     public function is_auth($digest) {
-		if(!isset($this)) {
-			throw new \BadMethodCallException('This method cannot called static');
-		}
-		
+        if(!isset($this)) {
+            throw new \BadMethodCallException('This method cannot called static');
+        }
+        
         if(empty($digest)) {
             return false;
         }
         
         $data = $this->http_digest_parse($digest);
-		
-		//check missing data
+        
+        //check missing data
         if($data === false) {
             return false;
         }
-		
-		//if 86400 second passed(1 day), auth will fail(prevent replay attack)
-		if(abs(time() - base64_decode($data['nonce']))>86400) {
-			return false;
-		}
+        
+        //if 86400 second passed(1 day), auth will fail(prevent replay attack)
+        if(abs(time() - base64_decode($data['nonce']))>86400) {
+            return false;
+        }
         
         $username = $data['username'];
         
-		//check if id exists
+        //check if id exists
         if(!isset($this->valid_id[$username])) {
             return false;
         }
@@ -105,30 +105,30 @@ class HTTP_Digest {
         $ha2 = md5($_SERVER['REQUEST_METHOD'].':'.$data['uri']);
         $response = md5($ha1.':'.$data['nonce'].':'.$data['nc'].':'.$data['cnonce'].':'.$data['qop'].':'.$ha2);
         
-		//check if password match
+        //check if password match
         if($data['response'] != $response) {
             return false;
         }
-		
+        
         return true;
     }
-	
-	/**
+    
+    /**
       * send http 401 header to client
       *
       * @param string $realm
-	  *        string $nonce
-	  * @throws BadMethodCallException when called after header is sended
+      *        string $nonce
+      * @throws BadMethodCallException when called after header is sended
       * @return void
       */
-	public static function sendAuthHeader($realm) {		
-		if(headers_sent()) {
-			throw new \BadMethodCallException('Cannot send auth header after header send');
-		}
-		
-		$nonce = base64_encode(time());
-		
-		header('HTTP/1.1 401 Unauthorized');
-		header('WWW-Authenticate: Digest realm="'.$realm.'",qop="auth",nonce="'.$nonce.'",opaque="'.md5($realm).'"');
-	}
+    public static function sendAuthHeader($realm) {        
+        if(headers_sent()) {
+            throw new \BadMethodCallException('Cannot send auth header after header send');
+        }
+        
+        $nonce = base64_encode(time());
+        
+        header('HTTP/1.1 401 Unauthorized');
+        header('WWW-Authenticate: Digest realm="'.$realm.'",qop="auth",nonce="'.$nonce.'",opaque="'.md5($realm).'"');
+    }
 }
